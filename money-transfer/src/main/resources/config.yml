@@ -1,0 +1,58 @@
+#database:
+#  driverClass: org.h2.Driver
+#  user: sa
+#  password: sa
+#  url: jdbc:h2:mem:temp:./target/money-transfer
+#  properties:
+#    charSet: UTF-8
+#    hibernate.dialect: org.hibernate.dialect.H2Dialect
+#  maxWaitForConnection: 1s
+#  validationQuery: "select 1 from dual"
+#  minSize: 2
+#database:
+#  driverClass: org.hsqldb.jdbc.JDBCDriver
+#  user: root
+#  password: passward
+#  url: jdbc:hsqldb:mem:temp
+#  validationQuery: SELECT * FROM INFORMATION_SCHEMA.SYSTEM_TABLES
+database:
+  driverClass: org.hsqldb.jdbc.JDBCDriver
+  user: root
+  password: password
+  url: jdbc:hsqldb:hsql://0.0.0.0:9001/money_transfer
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.HSQLDialect
+  maxWaitForConnection: 1s
+  validationQuery: "select 1 from INFORMATION_SCHEMA.SYSTEM_USERS"
+  validationQueryTimeout: 1s
+  initialSize: 2
+  minSize: 2
+  checkConnectionWhileIdle: false
+  evictionInterval: 10s
+  minIdleTime: 60s
+
+server:
+  type: simple
+  connector:
+    type: http
+    port: 8080
+
+logging:
+  level: INFO
+  loggers:
+    "com.molodec.nikita.transfer": DEBUG
+    "org.hibernate.SQL":
+      level: DEBUG
+  appenders:
+    - type: console
+      threshold: INFO
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+    - type: file
+      threshold: INFO
+      currentLogFilename: ./money-transfer.log
+      archivedLogFilenamePattern: ./money-transfer-%d{yyyy-MM-dd}-%i.log.gz
+      archivedFileCount: 7
+      timeZone: UTC
+      logFormat: "%-6level [%d{HH:mm:ss.SSS}] [%t] %logger{5} - %X{code} %msg %n"
+      maxFileSize: 10MiB

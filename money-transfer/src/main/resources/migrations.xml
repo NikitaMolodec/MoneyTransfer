@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="init" author="nikita_molodec">
+        <createTable tableName="users">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="login" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="money_transactions">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="from_account_id" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_account_id" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="numeric(15,6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_time" type="timestamp without time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_updated_time" type="timestamp without time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_status" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="varchar(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="accounts">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="varchar(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="balance" type="numeric(15,6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="currency_rates">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="from" type="varchar(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to" type="varchar(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rate" type="numeric(15,6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
