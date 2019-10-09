@@ -22,11 +22,11 @@ public class CurrencyRateDAO extends AbstractDAO<CurrencyRate> {
         Objects.requireNonNull(from);
         Objects.requireNonNull(to);
         if (from.equals(to)) return Optional.of(new CurrencyRate(-1, from, to, BigDecimal.ONE));
-        List<CurrencyRate> result = query("from currency_rates where from=:from and to:=to")
-                .setParameter("from", from)
-                .setParameter("to", to)
+        List<CurrencyRate> result = query("from CurrencyRate where fromCode=:fromCode and toCode=:toCode")
+                .setParameter("fromCode", from)
+                .setParameter("toCode", to)
                 .getResultList();
-        return Optional.ofNullable(result.get(0));
+        return Optional.ofNullable(result.isEmpty() ? null : result.get(0));
     }
 
     public CurrencyRate create(CurrencyRate currencyRate) {

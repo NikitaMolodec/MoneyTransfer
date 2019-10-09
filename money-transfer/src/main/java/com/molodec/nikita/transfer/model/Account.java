@@ -68,8 +68,13 @@ public class Account {
         this.currency = currency;
     }
 
-    public void applyDelta(BigDecimal delta) {
+    public void applyDelta(BigDecimal delta) throws BalanceModificationException {
         balance = balance.add(delta);
+        if (!hasValidBalance()) {
+            throw new BalanceModificationException(
+                    String.format("Account with id=%d has not valid balance=%s", id, balance)
+            );
+        }
     }
 
     public boolean hasValidBalance() {

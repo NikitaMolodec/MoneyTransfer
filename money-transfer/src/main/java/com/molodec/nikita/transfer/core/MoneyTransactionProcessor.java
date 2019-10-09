@@ -4,6 +4,7 @@ import com.molodec.nikita.transfer.db.AccountDAO;
 import com.molodec.nikita.transfer.db.CurrencyRateDAO;
 import com.molodec.nikita.transfer.db.MoneyTransactionDAO;
 import com.molodec.nikita.transfer.model.Account;
+import com.molodec.nikita.transfer.model.BalanceModificationException;
 import com.molodec.nikita.transfer.model.CurrencyRate;
 import com.molodec.nikita.transfer.model.MoneyTransaction;
 import com.molodec.nikita.transfer.model.TransactionStatus;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.function.Consumer;
 
-public class MoneyTransactionProcessor implements Consumer<MoneyTransaction> {
+public class MoneyTransactionProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(MoneyTransactionProcessor.class);
 
@@ -30,24 +31,20 @@ public class MoneyTransactionProcessor implements Consumer<MoneyTransaction> {
         this.currencyRateDAO = currencyRateDAO;
     }
 
-    @Override
     @UnitOfWork
-    public void accept(MoneyTransaction moneyTransaction) {
+    public void process(MoneyTransaction moneyTransaction) throws BalanceModificationException {
         logger.info("About to process moneyTransaction: {}", moneyTransaction);
-        moneyTransaction.setTransactionStatus(TransactionStatus.PROCESSING);
-        moneyTransaction.setLastUpdatedTime(LocalDateTime.now(ZoneOffset.UTC));
-        moneyTransactionDAO.update(moneyTransaction);
 
         Account fromAccount = accountDAO.findById(moneyTransaction.getFromAccountId())
-                .orElseThrow(() -> new RuntimeException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
         Account toAccount = accountDAO.findById(moneyTransaction.getToAccountId())
-                .orElseThrow(() -> new RuntimeException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
         logger.info("Process transaction for accounts: from={} to={}", fromAccount, toAccount);
 
         CurrencyRate currencyRateForFromAccount = currencyRateDAO.findByCurrency(fromAccount.getCurrency(), moneyTransaction.getCurrency())
-                .orElseThrow(() -> new RuntimeException("Cannot find currency rate for " + fromAccount.getCurrency() + "->" + moneyTransaction.getCurrency()));
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find currency rate for " + fromAccount.getCurrency() + "->" + moneyTransaction.getCurrency()));
         CurrencyRate currencyRateForToAccount = currencyRateDAO.findByCurrency(moneyTransaction.getCurrency(), toAccount.getCurrency())
-                .orElseThrow(() -> new RuntimeException("Cannot find currency rate for " + moneyTransaction.getCurrency() + "->" + toAccount.getCurrency()));
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find currency rate for " + moneyTransaction.getCurrency() + "->" + toAccount.getCurrency()));
 
         BigDecimal deltaForFromAccount = currencyRateForFromAccount.convert(moneyTransaction.getAmount()).negate();
         BigDecimal deltaForToAccount = currencyRateForToAccount.convert(moneyTransaction.getAmount());
@@ -55,15 +52,12 @@ public class MoneyTransactionProcessor implements Consumer<MoneyTransaction> {
         fromAccount.applyDelta(deltaForFromAccount);
         toAccount.applyDelta(deltaForToAccount);
 
-        if (fromAccount.hasValidBalance() && toAccount.hasValidBalance()) {
-            accountDAO.update(fromAccount);
-            accountDAO.update(toAccount);
-            moneyTransaction.setTransactionStatus(TransactionStatus.DONE);
-            moneyTransaction.setLastUpdatedTime(LocalDateTime.now(ZoneOffset.UTC));
-            moneyTransactionDAO.update(moneyTransaction);
-            logger.info("Successfully process transaction. Accounts after apply balanace delta: from={} to={}", fromAccount, toAccount);
-        } else {
-            logger.info("Cannot process transaction. One of account has not valid balance after apply balance delta: from={} to={}", fromAccount, toAccount);
-        }
+        accountDAO.update(fromAccount);
+        accountDAO.update(toAccount);
+        moneyTransaction.setTransactionStatus(TransactionStatus.DONE);
+        moneyTransaction.setLastUpdatedTime(LocalDateTime.now(ZoneOffset.UTC));
+        moneyTransactionDAO.update(moneyTransaction);
+        logger.info("Successfully process transaction. Accounts after apply balance delta: from={} to={}", fromAccount, toAccount);
+
     }
 }

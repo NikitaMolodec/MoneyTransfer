@@ -17,19 +17,19 @@ public class CurrencyRate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "from", nullable = false)
-    private Currency from;
+    @Column(name = "from_code", nullable = false)
+    private Currency fromCode;
 
-    @Column(name = "to", nullable = false)
-    private Currency to;
+    @Column(name = "to_code", nullable = false)
+    private Currency toCode;
 
     @Column(name = "rate", nullable = false)
     private BigDecimal rate;
 
-    public CurrencyRate(Integer id, Currency from, Currency to, BigDecimal rate) {
+    public CurrencyRate(Integer id, Currency fromCode, Currency toCode, BigDecimal rate) {
         this.id = id;
-        this.from = from;
-        this.to = to;
+        this.fromCode = fromCode;
+        this.toCode = toCode;
         this.rate = rate;
     }
 
@@ -44,20 +44,20 @@ public class CurrencyRate {
         this.id = id;
     }
 
-    public Currency getFrom() {
-        return from;
+    public Currency getFromCode() {
+        return fromCode;
     }
 
-    public void setFrom(Currency from) {
-        this.from = from;
+    public void setFromCode(Currency fromCode) {
+        this.fromCode = fromCode;
     }
 
-    public Currency getTo() {
-        return to;
+    public Currency getToCode() {
+        return toCode;
     }
 
-    public void setTo(Currency to) {
-        this.to = to;
+    public void setToCode(Currency toCode) {
+        this.toCode = toCode;
     }
 
     public BigDecimal getRate() {
@@ -78,22 +78,22 @@ public class CurrencyRate {
         if (!(o instanceof CurrencyRate)) return false;
         CurrencyRate that = (CurrencyRate) o;
         return Objects.equals(id, that.id) &&
-                from == that.from &&
-                to == that.to &&
+                fromCode == that.fromCode &&
+                toCode == that.toCode &&
                 Objects.equals(rate, that.rate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, from, to, rate);
+        return Objects.hash(id, fromCode, toCode, rate);
     }
 
     @Override
     public String toString() {
         return "CurrencyRate{" +
                 "id=" + id +
-                ", from=" + from +
-                ", to=" + to +
+                ", fromCode=" + fromCode +
+                ", toCode=" + toCode +
                 ", rate=" + rate +
                 '}';
     }

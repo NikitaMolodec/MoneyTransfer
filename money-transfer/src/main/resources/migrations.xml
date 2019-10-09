@@ -59,10 +59,10 @@
             <column name="id" type="integer" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="from" type="varchar(3)">
+            <column name="from_code" type="varchar(3)">
                 <constraints nullable="false"/>
             </column>
-            <column name="to" type="varchar(3)">
+            <column name="to_code" type="varchar(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="rate" type="numeric(15,6)">
