@@ -56,7 +56,6 @@ public class MoneyTransferApplication extends Application<MoneyTransferConfigura
     }
 
     @Override
-    @UnitOfWork
     public void run(MoneyTransferConfiguration moneyTransferConfiguration, Environment environment) throws Exception {
         final UserDAO userDAO = new UserDAO(hibernate.getSessionFactory());
         final MoneyTransactionDAO moneyTransactionDAO = new MoneyTransactionDAO(hibernate.getSessionFactory());

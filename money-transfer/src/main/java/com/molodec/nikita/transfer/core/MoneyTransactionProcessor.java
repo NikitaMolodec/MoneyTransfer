@@ -31,7 +31,6 @@ public class MoneyTransactionProcessor {
         this.currencyRateDAO = currencyRateDAO;
     }
 
-    @UnitOfWork
     public void process(MoneyTransaction moneyTransaction) throws BalanceModificationException {
         logger.info("About to process moneyTransaction: {}", moneyTransaction);
 

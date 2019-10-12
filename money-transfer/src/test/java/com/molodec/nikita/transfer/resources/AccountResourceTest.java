@@ -1,8 +1,8 @@
 package com.molodec.nikita.transfer.resources;
 
-
-import com.molodec.nikita.transfer.db.UserDAO;
-import com.molodec.nikita.transfer.model.User;
+import com.molodec.nikita.transfer.db.AccountDAO;
+import com.molodec.nikita.transfer.model.Account;
+import com.molodec.nikita.transfer.model.Currency;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,50 +25,49 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class UserResourceTest {
-    private static final UserDAO USER_DAO = mock(UserDAO.class);
+public class AccountResourceTest {
+    private static final AccountDAO ACCOUNT_DAO = mock(AccountDAO.class);
     public static final ResourceExtension RULE = ResourceExtension.builder()
-            .addResource(new UserResource(USER_DAO))
+            .addResource(new AccountResource(ACCOUNT_DAO))
             .setTestContainerFactory(new GrizzlyWebTestContainerFactory())
             .build();
-    private ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-    private User user;
+    private ArgumentCaptor<Account> accoutCaptor = ArgumentCaptor.forClass(Account.class);
+    private Account account;
 
     @BeforeEach
     public void setUp() {
-        user = new User(1, "exampleLogin");
+        account = new Account(1, BigDecimal.valueOf(100), 1, Currency.USD);
     }
 
     @AfterEach
     public void tearDown() {
-        reset(USER_DAO);
+        reset(ACCOUNT_DAO);
     }
 
     @Test
-    public void getUser() {
-        when(USER_DAO.findById(1)).thenReturn(Optional.of(user));
+    public void getAccount() {
+        when(ACCOUNT_DAO.findById(1)).thenReturn(Optional.of(account));
 
-        Response response = RULE.target("/user/get/1")
+        Response response = RULE.target("/account/get/1")
                 .request()
                 .get();
 
-        assertThat(response.readEntity(User.class)).isEqualTo(user);
-        verify(USER_DAO).findById(1);
+        assertThat(response.readEntity(Account.class)).isEqualTo(account);
+        verify(ACCOUNT_DAO).findById(1);
     }
 
     @Test
-    public void createUser() {
-        when(USER_DAO.create(any(User.class))).thenReturn(user);
+    public void createAccount() {
+        when(ACCOUNT_DAO.create(any(Account.class))).thenReturn(account);
 
-        Response response = RULE.target("/user/create/")
+        Response response = RULE.target("/account/create/")
                 .request(MediaType.APPLICATION_JSON_TYPE)
-                .post(Entity.entity(user, MediaType.APPLICATION_JSON_TYPE));
+                .post(Entity.entity(account, MediaType.APPLICATION_JSON_TYPE));
 
         assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-        assertThat(response.readEntity(User.class)).isEqualTo(user);
-        verify(USER_DAO).create(userCaptor.capture());
-        assertThat(userCaptor.getValue()).isEqualTo(user);
+        assertThat(response.readEntity(Account.class)).isEqualTo(account);
+        verify(ACCOUNT_DAO).create(accoutCaptor.capture());
+        assertThat(accoutCaptor.getValue()).isEqualTo(account);
     }
 }
