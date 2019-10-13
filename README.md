@@ -9,13 +9,13 @@ Money Transfer API contains:
 ### Available RESTFul methods
 |METHOD|PATH|USAGE|
 |-----|-----|-----|
-|POST|/account/create/|register account and save|
-|GET|/account/get/{id}|return account by id from database|
-|POST|/currency/create/|register currency rate and save|
-|POST|/transaction/create/|register transaction and trigger transaction processing|
-|GET|/transaction/get/{id}|return transaction by id from database|
-|POST|/user/create/|register user and save|
-|GET|/user/get/{id}|return user by id from database|
+|POST|/application/account/create/|register account and save|
+|GET|/application/account/get/{id}|return account by id from database|
+|POST|/application/currency/create/|register currency rate and save|
+|POST|/application/transaction/create/|register transaction and trigger transaction processing|
+|GET|/application/transaction/get/{id}|return transaction by id from database|
+|POST|/application/user/create/|register user and save|
+|GET|/application/user/get/{id}|return user by id from database|
 
 ### A few words about transactions
 
@@ -26,7 +26,7 @@ MoneyTransactions have free status(PROCESSING, DONE, FAILED):
 
 ### How to run
 
-You need JDK8, maven >= 3.2.5, available ports 8080 (http) on your machine
+You need JDK8, maven >= 3.2.5, available port 8080, 9001 on your machine
 
 Command:
 ```bash
@@ -40,7 +40,7 @@ java -jar <path-to-jar> server <path-to-config>
 ```
 Also API will create a log file "money-transfer.log"
 
-###Examples
+### Examples
 
 As example you can run these files:
 *   example.sh - this script create example rates/accounts and requesting transaction processing. This example shows normal work of API.
