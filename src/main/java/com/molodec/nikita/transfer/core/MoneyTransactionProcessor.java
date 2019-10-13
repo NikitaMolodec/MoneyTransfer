@@ -37,7 +37,7 @@ public class MoneyTransactionProcessor {
         Account fromAccount = accountDAO.findById(moneyTransaction.getFromAccountId())
                 .orElseThrow(() -> new IllegalArgumentException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
         Account toAccount = accountDAO.findById(moneyTransaction.getToAccountId())
-                .orElseThrow(() -> new IllegalArgumentException("Cannot find account with id=" + moneyTransaction.getFromAccountId()));
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find account with id=" + moneyTransaction.getToAccountId()));
         logger.info("Process transaction for accounts: from={} to={}", fromAccount, toAccount);
 
         CurrencyRate currencyRateForFromAccount = currencyRateDAO.findByCurrency(fromAccount.getCurrency(), moneyTransaction.getCurrency())
@@ -45,8 +45,8 @@ public class MoneyTransactionProcessor {
         CurrencyRate currencyRateForToAccount = currencyRateDAO.findByCurrency(moneyTransaction.getCurrency(), toAccount.getCurrency())
                 .orElseThrow(() -> new IllegalArgumentException("Cannot find currency rate for " + moneyTransaction.getCurrency() + "->" + toAccount.getCurrency()));
 
-        BigDecimal deltaForFromAccount = currencyRateForFromAccount.convert(moneyTransaction.getAmount()).negate();
-        BigDecimal deltaForToAccount = currencyRateForToAccount.convert(moneyTransaction.getAmount());
+        BigDecimal deltaForFromAccount = currencyRateForFromAccount.convertTo(moneyTransaction.getAmount()).negate();
+        BigDecimal deltaForToAccount = currencyRateForToAccount.convertFrom(moneyTransaction.getAmount());
 
         fromAccount.applyDelta(deltaForFromAccount);
         toAccount.applyDelta(deltaForToAccount);

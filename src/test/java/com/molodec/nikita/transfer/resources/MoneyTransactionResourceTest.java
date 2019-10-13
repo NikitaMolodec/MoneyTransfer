@@ -16,7 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -43,8 +42,6 @@ public class MoneyTransactionResourceTest {
                     ,new MoneyTransactionProcessor(ACCOUNT_DAO, MONEY_TRANSACTION_DAO, CURRENCY_RATE_DAO)))
             .setTestContainerFactory(new GrizzlyWebTestContainerFactory())
             .build();
-    private ArgumentCaptor<MoneyTransaction> moneyTransactionCaptor = ArgumentCaptor.forClass(MoneyTransaction.class);
-    private ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
     private MoneyTransaction moneyTransaction;
     private Account accountFrom;
     private Account accountTo;
@@ -53,7 +50,6 @@ public class MoneyTransactionResourceTest {
 
     @BeforeEach
     public void setUp() {
-        moneyTransaction = new MoneyTransaction(1, 1, 2, BigDecimal.valueOf(100), Currency.RUB);
         moneyTransaction = new MoneyTransaction.Builder()
                 .withId(1)
                 .withFromAccountId(1)
@@ -72,9 +68,7 @@ public class MoneyTransactionResourceTest {
 
     @AfterEach
     public void tearDown() {
-        reset(ACCOUNT_DAO);
-        reset(MONEY_TRANSACTION_DAO);
-        reset(CURRENCY_RATE_DAO);
+        reset(ACCOUNT_DAO, MONEY_TRANSACTION_DAO, CURRENCY_RATE_DAO);
     }
 
     @Test
@@ -90,11 +84,10 @@ public class MoneyTransactionResourceTest {
     }
 
     @Test
-    public void processTransaction() {
+    public void processValidTransaction() {
         when(MONEY_TRANSACTION_DAO.create(any(MoneyTransaction.class))).thenReturn(moneyTransaction);
         when(ACCOUNT_DAO.findById(1)).thenReturn(Optional.of(accountFrom));
         when(ACCOUNT_DAO.findById(2)).thenReturn(Optional.of(accountTo));
-        when(MONEY_TRANSACTION_DAO.findById(1)).thenReturn(Optional.of(moneyTransaction));
         when(CURRENCY_RATE_DAO.findByCurrency(Currency.USD, Currency.RUB)).thenReturn(Optional.of(usdToRubRate));
         when(CURRENCY_RATE_DAO.findByCurrency(Currency.RUB, Currency.EUR)).thenReturn(Optional.of(rubToEurRate));
 
@@ -103,15 +96,98 @@ public class MoneyTransactionResourceTest {
                 .post(Entity.entity(moneyTransaction, MediaType.APPLICATION_JSON_TYPE));
 
         assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-        MoneyTransaction transactionFromResponse = response.readEntity(MoneyTransaction.class);
+        assertThat(response.readEntity(MoneyTransaction.class)).isEqualTo(moneyTransaction);
 
-        assertThat(transactionFromResponse.getId()).isEqualTo(moneyTransaction.getId());
-        assertThat(transactionFromResponse.getCreationTime()).isEqualTo(moneyTransaction.getCreationTime());
-        assertThat(transactionFromResponse.getTransactionStatus()).isEqualTo(TransactionStatus.DONE);
-
-        System.out.println(ACCOUNT_DAO.findById(1));
-        System.out.println(ACCOUNT_DAO.findById(2));
-        System.out.println(MONEY_TRANSACTION_DAO.findById(1));
+        assertThat(accountTo.hasValidBalance()).isEqualTo(true);
+        assertThat(accountFrom.hasValidBalance()).isEqualTo(true);
+        assertThat(accountTo.getBalance()).isEqualTo(BigDecimal.valueOf(1100));
+        assertThat(accountFrom.getBalance()).isEqualTo(BigDecimal.valueOf(900));
+        assertThat(moneyTransaction.getTransactionStatus()).isEqualTo(TransactionStatus.DONE);
     }
 
+    @Test()
+    public void notValidFromAccountId() {
+        moneyTransaction.setFromAccountId(0);
+
+        when(MONEY_TRANSACTION_DAO.create(any(MoneyTransaction.class))).thenReturn(moneyTransaction);
+        when(ACCOUNT_DAO.findById(0)).thenReturn(Optional.empty());
+
+        Response response = RULE.target("/transaction/create/")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.entity(moneyTransaction, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatusInfo()).isEqualTo(Response.Status.BAD_REQUEST);
+        assertThat(response.readEntity(String.class).contains("id=0")).isEqualTo(true);
+
+        assertThat(moneyTransaction.getTransactionStatus()).isEqualTo(TransactionStatus.FAILED);
+    }
+
+    @Test()
+    public void notValidToAccountId() {
+        moneyTransaction.setToAccountId(3);
+
+        when(MONEY_TRANSACTION_DAO.create(any(MoneyTransaction.class))).thenReturn(moneyTransaction);
+        when(ACCOUNT_DAO.findById(1)).thenReturn(Optional.of(accountFrom));
+        when(ACCOUNT_DAO.findById(3)).thenReturn(Optional.empty());
+
+        Response response = RULE.target("/transaction/create/")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.entity(moneyTransaction, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatusInfo()).isEqualTo(Response.Status.BAD_REQUEST);
+        assertThat(response.readEntity(String.class).contains("id=3")).isEqualTo(true);
+
+        assertThat(moneyTransaction.getTransactionStatus()).isEqualTo(TransactionStatus.FAILED);
+    }
+
+    @Test()
+    public void notValidCurrency() {
+        moneyTransaction.setCurrency(Currency.EUR);
+
+        when(MONEY_TRANSACTION_DAO.create(any(MoneyTransaction.class))).thenReturn(moneyTransaction);
+        when(ACCOUNT_DAO.findById(1)).thenReturn(Optional.of(accountFrom));
+        when(ACCOUNT_DAO.findById(2)).thenReturn(Optional.of(accountTo));
+        when(CURRENCY_RATE_DAO.findByCurrency(Currency.USD, Currency.EUR)).thenReturn(Optional.empty());
+
+        Response response = RULE.target("/transaction/create/")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.entity(moneyTransaction, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatusInfo()).isEqualTo(Response.Status.BAD_REQUEST);
+        assertThat(response.readEntity(String.class).contains("USD->EUR")).isEqualTo(true);
+
+        assertThat(moneyTransaction.getTransactionStatus()).isEqualTo(TransactionStatus.FAILED);
+    }
+
+    @Test
+    public void notValidFromAccountBalance() {
+        accountFrom.setBalance(BigDecimal.ZERO);
+
+        when(MONEY_TRANSACTION_DAO.create(any(MoneyTransaction.class))).thenReturn(moneyTransaction);
+        when(ACCOUNT_DAO.findById(1)).thenReturn(Optional.of(accountFrom));
+        when(ACCOUNT_DAO.findById(2)).thenReturn(Optional.of(accountTo));
+        when(CURRENCY_RATE_DAO.findByCurrency(Currency.USD, Currency.RUB)).thenReturn(Optional.of(usdToRubRate));
+        when(CURRENCY_RATE_DAO.findByCurrency(Currency.RUB, Currency.EUR)).thenReturn(Optional.of(rubToEurRate));
+
+        Response response = RULE.target("/transaction/create/")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.entity(moneyTransaction, MediaType.APPLICATION_JSON_TYPE));
+
+        assertThat(response.getStatusInfo()).isEqualTo(Response.Status.BAD_REQUEST);
+        assertThat(response.readEntity(String.class).contains("balance=0")).isEqualTo(true);
+
+        assertThat(accountTo.hasValidBalance()).isEqualTo(true);
+        assertThat(accountFrom.hasValidBalance()).isEqualTo(true);
+        assertThat(accountTo.getBalance()).isEqualTo(BigDecimal.valueOf(1000));
+        assertThat(accountFrom.getBalance()).isEqualTo(BigDecimal.valueOf(0));
+        assertThat(moneyTransaction.getTransactionStatus()).isEqualTo(TransactionStatus.FAILED);
+    }
+
+    @Test
+    public void createEmptyTransaction() {
+        Response response = RULE.target("/transaction/create/")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .post(Entity.entity(new MoneyTransaction(), MediaType.APPLICATION_JSON_TYPE));
+        assertThat(response.getStatusInfo()).isEqualTo(Response.Status.BAD_REQUEST);
+    }
 }

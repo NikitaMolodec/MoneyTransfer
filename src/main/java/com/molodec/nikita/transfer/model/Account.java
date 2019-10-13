@@ -69,15 +69,21 @@ public class Account {
     }
 
     public void applyDelta(BigDecimal delta) throws BalanceModificationException {
-        balance = balance.add(delta);
-        if (!hasValidBalance()) {
+        BigDecimal balanceAfterApply = balance.add(delta);
+        if (isBalanceValid(balanceAfterApply)) {
+            balance = balanceAfterApply;
+        } else {
             throw new BalanceModificationException(
-                    String.format("Account with id=%d has not valid balance=%s", id, balance)
+                    String.format("Account with id=%d has not valid balance=%s, requesting delta=%s", id, balance, delta)
             );
         }
     }
 
     public boolean hasValidBalance() {
+        return isBalanceValid(balance);
+    }
+
+    private boolean isBalanceValid(BigDecimal balance) {
         return balance.compareTo(BigDecimal.ZERO) >= 0;
     }
 

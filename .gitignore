@@ -1,0 +1,12 @@
+target/
+
+.DS_Store
+profile
+
+.idea
+*.iml
+*.iws
+*.ipr
+*.releaseBackup
+
+*.log*

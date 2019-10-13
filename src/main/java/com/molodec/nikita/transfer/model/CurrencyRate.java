@@ -7,11 +7,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 @Entity
 @Table(name = "currency_rates")
 public class CurrencyRate {
+
+    private static final MathContext MATH_CONTEXT_FOR_DIVISION = new MathContext(100, RoundingMode.HALF_UP);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,8 +72,12 @@ public class CurrencyRate {
         this.rate = rate;
     }
 
-    public BigDecimal convert(BigDecimal amount) {
+    public BigDecimal convertFrom(BigDecimal amount) {
         return amount.multiply(rate);
+    }
+
+    public BigDecimal convertTo(BigDecimal amount) {
+        return amount.divide(rate, MATH_CONTEXT_FOR_DIVISION);
     }
 
     @Override

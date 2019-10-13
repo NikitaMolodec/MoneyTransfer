@@ -68,24 +68,12 @@ public class MoneyTransactionResource {
                 createdTransaction.setTransactionStatus(TransactionStatus.FAILED);
                 createdTransaction.setLastUpdatedTime(LocalDateTime.now(ZoneOffset.UTC));
                 moneyTransactionDAO.update(createdTransaction);
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-//                throw new WebApplicationException(e.getMessage(), e, Response.Status.INTERNAL_SERVER_ERROR);
+                return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
             }
             return Response.ok().entity(createdTransaction).build();
         } else {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            logger.info("Cannot save transaction:{}", transaction.toString());
+            return Response.status(Response.Status.BAD_REQUEST).entity("Cannot save transaction required fields is null").build();
         }
     }
-
-//    @UnitOfWork
-//    private MoneyTransaction saveTransaction(MoneyTransaction moneyTransaction) {
-//        return moneyTransactionDAO.create(moneyTransaction);
-//    }
-//
-//    @UnitOfWork
-//    private void failTransaction(MoneyTransaction moneyTransaction) {
-//        moneyTransaction.setTransactionStatus(TransactionStatus.FAILED);
-//        moneyTransaction.setLastUpdatedTime(LocalDateTime.now(ZoneOffset.UTC));
-//        moneyTransactionDAO.update(moneyTransaction);
-//    }
 }
