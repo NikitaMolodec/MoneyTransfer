@@ -26,7 +26,7 @@ MoneyTransactions have free status(PROCESSING, DONE, FAILED):
 
 ### How to run
 
-You need JDK8, maven >= 3.2.5, available port 8080, 9001 on your machine
+You need JDK8 or later, maven 3.2.5 or later, available ports 8080, 9001 on your machine
 
 Command:
 ```bash
@@ -37,6 +37,10 @@ As a result, you will have jar to run: "money-transfer-1.0-SNAPSHOT.jar"
 You can launch it with command using config file "config.yml":
 ```bash
 java -jar <path-to-jar> server <path-to-config>  
+```
+for example:
+```bash
+java -jar target/money-transfer-1.0-SNAPSHOT.jar server src/main/resources/config.yml  
 ```
 Also API will create a log file "money-transfer.log"
 
